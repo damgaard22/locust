@@ -10,13 +10,11 @@ from hashlib import md5
 import gevent
 from gevent import GreenletExit
 from gevent.pool import Group
-import six
-from six.moves import xrange
 
-from . import events
-from .stats import global_stats
+import events
+from stats import global_stats
 
-from .rpc import rpc, Message
+from rpc import rpc, Message
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +27,6 @@ SLAVE_REPORT_INTERVAL = 3.0
 
 class LocustRunner(object):
     def __init__(self, locust_classes, options):
-        self.options = options
         self.locust_classes = locust_classes
         self.hatch_rate = options.hatch_rate
         self.num_clients = options.num_clients
@@ -44,9 +41,8 @@ class LocustRunner(object):
         # register listener that resets stats when hatching is complete
         def on_hatch_complete(user_count):
             self.state = STATE_RUNNING
-            if not self.options.no_reset_stats:
-                logger.info("Resetting stats\n")
-                self.stats.reset_all()
+            logger.info("Resetting stats\n")
+            #self.stats.reset_all()
         events.hatch_complete += on_hatch_complete
 
     @property
@@ -106,7 +102,7 @@ class LocustRunner(object):
             sleep_time = 1.0 / self.hatch_rate
             while True:
                 if not bucket:
-                    logger.info("All locusts hatched: %s" % ", ".join(["%s: %d" % (name, count) for name, count in six.iteritems(occurence_count)]))
+                    logger.info("All locusts hatched: %s" % ", ".join(["%s: %d" % (name, count) for name, count in occurence_count.iteritems()]))
                     events.hatch_complete.fire(user_count=self.num_clients)
                     return
 
@@ -229,7 +225,7 @@ class MasterLocustRunner(DistributedLocustRunner):
         
         class SlaveNodesDict(dict):
             def get_by_state(self, state):
-                return [c for c in six.itervalues(self) if c.state == state]
+                return [c for c in self.itervalues() if c.state == state]
             
             @property
             def ready(self):
@@ -264,7 +260,7 @@ class MasterLocustRunner(DistributedLocustRunner):
     
     @property
     def user_count(self):
-        return sum([c.user_count for c in six.itervalues(self.clients)])
+        return sum([c.user_count for c in self.clients.itervalues()])
     
     def start_hatching(self, locust_count, hatch_rate):
         num_slaves = len(self.clients.ready) + len(self.clients.running)
@@ -274,7 +270,7 @@ class MasterLocustRunner(DistributedLocustRunner):
             return
 
         self.num_clients = locust_count
-        slave_num_clients = locust_count // (num_slaves or 1)
+        slave_num_clients = locust_count / (num_slaves or 1)
         slave_hatch_rate = float(hatch_rate) / (num_slaves or 1)
         remaining = locust_count % num_slaves
 
@@ -285,7 +281,7 @@ class MasterLocustRunner(DistributedLocustRunner):
             self.exceptions = {}
             events.master_start_hatching.fire()
         
-        for client in six.itervalues(self.clients):
+        for client in self.clients.itervalues():
             data = {
                 "hatch_rate":slave_hatch_rate,
                 "num_clients":slave_num_clients,
@@ -309,7 +305,7 @@ class MasterLocustRunner(DistributedLocustRunner):
         events.master_stop_hatching.fire()
     
     def quit(self):
-        for client in six.itervalues(self.clients):
+        for client in self.clients.itervalues():
             self.server.send(Message("quit", None, None))
         self.greenlet.kill(block=True)
     
@@ -336,7 +332,7 @@ class MasterLocustRunner(DistributedLocustRunner):
                 self.clients[msg.node_id].state = STATE_RUNNING
                 self.clients[msg.node_id].user_count = msg.data["count"]
                 if len(self.clients.hatching) == 0:
-                    count = sum(c.user_count for c in six.itervalues(self.clients))
+                    count = sum(c.user_count for c in self.clients.itervalues())
                     events.hatch_complete.fire(user_count=count)
             elif msg.type == "quit":
                 if msg.node_id in self.clients:
@@ -352,7 +348,7 @@ class MasterLocustRunner(DistributedLocustRunner):
 class SlaveLocustRunner(DistributedLocustRunner):
     def __init__(self, *args, **kwargs):
         super(SlaveLocustRunner, self).__init__(*args, **kwargs)
-        self.client_id = socket.gethostname() + "_" + md5(str(time() + random.randint(0,10000)).encode('utf-8')).hexdigest()
+        self.client_id = socket.gethostname() + "_" + md5(str(time() + random.randint(0,10000))).hexdigest()
         
         self.client = rpc.Client(self.master_host, self.master_port)
         self.greenlet = Group()

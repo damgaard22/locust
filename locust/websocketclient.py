@@ -9,25 +9,17 @@ import websocket
 
 class SocketClient(object):
 	def __init__(self, host):
-		self.host = 'wss://demokratiskolen.dk/broker'
-		self.cookie = ["Cookie: sessionid=uskxhvmfga8s3xfma3mcitb29499kg2p; _pk_id.2.7f89=f02a0d400f4ec018.1499432889.8.1501599292.1501599281.; _pk_ses.2.7f89=*; csrftoken=Y8aKx0xjTmeEbJwNsngdGQXivmUnTgJ8"]
+		#self.host = 'wss://demokratiskolen.dk/broker'
+		#self.cookie = ["Cookie: sessionid=uskxhvmfga8s3xfma3mcitb29499kg2p; _pk_id.2.7f89=f02a0d400f4ec018.1499432889.8.1501599292.1501599281.; _pk_ses.2.7f89=*; csrftoken=Y8aKx0xjTmeEbJwNsngdGQXivmUnTgJ8"]
 
 	def connect_no_auth(self):
 		self.ws = websocket.WebSocket()
 		
-		g = gevent.spawn(self.ws.connect, self.host)
-		g.get(block = True, timeout = 2)
-		g = gevent.spawn(self.ws.recv)
-		json_data = g.get(block = True, timeout = 10)
-
-		print(json_data)
-		
 		events.quitting += self.on_close
 
-	def connect(self):
+	def connect(self, cookie, host):
 		self.ws = websocket.WebSocket()
-		self.ws.connect(self.host, header = self.cookie)
-		#self.ws.connect(self.host)
+		self.ws.connect(host, header = cookie)
 		
 		events.quitting += self.on_close
 

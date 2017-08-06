@@ -32,8 +32,8 @@ self.ws_client.FUNCTION()
 ```
 
 The ws_client has two functions useful for testing:
-connect() - Creates a WebSocket and connects to the broker with a session-cookie
-send() - Sends data over the WebSocket created in connect
+* connect() - Creates a WebSocket and connects to the broker with a session-cookie
+* send() - Sends data over the WebSocket created in connect
 
 #### connect()
 Connect takes no arguments, it authenticates using the cookie that is hardcoded in websocketclient.py.
@@ -75,7 +75,7 @@ from locust import Locust, TaskSet, task, HttpLocust
 class MyTaskSet(TaskSet):
     def on_start(self):
     """
-    
+    This function is executed once at the creation of the locust. This is a good place to authenticate.
     """
         self.ws_client.connect()
         print('WebSocket connected')
@@ -96,12 +96,74 @@ class MyLocust(HttpLocust):
 The locust file defines a single locust that waits between 3 to 5 seconds before executing a random task in MyTaskSet.
 
 #### Testing with HTTP
+The following section is meant to give a quick introduction to using the Locust HTTP client for testing.
+For a more in depth guide, please refer to: http://docs.locust.io/en/latest/writing-a-locustfile.html#making-http-requests
+
+Locust implements its own HTTP client as a property of a locust.
+Called using:
+
+```python
+self.client.METHOD()
+```
+
+When running locust you supply a host as an argument.
+The url supplied will become the base_url, therefore it is important to be mindful of how you write that url.
 
 ##### GET requests
+GET requests are made using the client as such:
+
+```python
+self.client.get(url)
+```
+
+If i supplied https://github.com as the base_url and wanted to GET https://github.com/damgaard22/ then i would pass
+/damgaard22/ as the url parameter as it is appended to the base_url
+
+Example printing the contents of response from GET https://github.com/damgaard22/
+
+```python
+r = self.client.get(/damgaard22/)
+print(r.text)
+```
 
 ##### POST requests
+The same url logic applies to POST requests.
+A POST request is made as follows:
+
+```python
+self.client.post(url, data)
+```
+Let's say i wanted to POST data to https://github.com/login/ i would pass /login/ as the url parameter.
+
+```python
+data = {'Dummy': 'data'}
+self.client.post(url, data)
+```
+
+If your target is using SSL you might need to add a Referer to the request header.
+Edit headers by changing the dict client.headers:
+
+```python
+data = {'Dummy': 'data'}
+self.client.headers['Referer'] = 'https://github.com/login/'
+self.client.post(/login/, data)
+```
+
+You might also need to add a CSRF token, which requires a get request first:
+
+```python
+r = self.client.get('/login/')
+csrftoken = r.cookies['csrftoken']
+
+data = {'Dummy': 'data','csrfmiddlewaretoken': csrftoken}
+self.client.headers['Referer'] = 'https://github.com/login/'
+self.client.post(/login/, data)
+```
 
 ##### Authenticating with HTTP
+
+
+
 
 #### Running Locust
 

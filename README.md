@@ -105,7 +105,7 @@ Called using:
 ```python
 self.client.METHOD()
 ```
-
+8
 When running locust you supply a host as an argument.
 The url supplied will become the base_url, therefore it is important to be mindful of how you write that url.
 
@@ -161,13 +161,34 @@ self.client.post(/login/, data)
 ```
 
 ##### Authenticating with HTTP
+Authenticating with the HTTP client can be done in a couple of ways.
 
+One of the ways you can authenticate with the locust http client is as follows:
+```python
+r = self.client.get('/login/')
+csrftoken = r.cookies['csrftoken']
 
+data = {'csrfmiddlewaretoken': csrftoken, 'username': 'USERNAME', 'password': 'PASSWORD'}
+self.client.headers['Referer'] = 'https://github.com/login/'
+self.client.post(/login/, data)
+```
+
+For more information on alternative ways of authenticating, please refer to http://docs.locust.io/en/latest/writing-a-locustfile.html#making-http-requests
 
 
 #### Running Locust
 
+To actually run the locust service run:
+```bash
+locust -f LOCUST_FILE --host BASE_URL
+```
+
+Where LOCUST_FILE is the path to the locust_file and BASE_URL is the base_url of the host.
+
 ## To Do
+
+* Streamline the process of getting a CSRF token before a POST request
+* Not hardcoding the Cookie and the broker url
 
 ## License
 

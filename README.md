@@ -36,14 +36,16 @@ The ws_client has two functions useful for testing:
 * send() - Sends data over the WebSocket created in connect
 
 #### connect()
-Connect takes no arguments, it authenticates using the cookie that is hardcoded in websocketclient.py.
-The broker is also hardcoded in websocketclient.py
-This is definately a process that can be improved.
+Connect takes two arguments:
+* cookie: **Dict** - Dict containing a string as such:  ['Cookie: COOKIESTRING']
+* host: **String** - The url of the WebSocket broker as a string 
 
 The connection is kept for the whole testing process.
 Example:
 
 ```python
+host = 'wss://github.com/broker'
+cookie = ['Cookie: COOKIESTRING']
 self.ws_client.connect()
 ```
 
@@ -188,7 +190,6 @@ Where LOCUST_FILE is the path to the locust_file and BASE_URL is the base_url of
 ## To Do
 
 * Streamline the process of getting a CSRF token before a POST request
-* Not hardcoding the Cookie and the broker url
 
 ## License
 

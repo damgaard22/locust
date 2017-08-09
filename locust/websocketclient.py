@@ -8,28 +8,38 @@ import websocket
 
 
 class SocketClient(object):
-	def __init__(self, host):
-		#self.host = 'wss://demokratiskolen.dk/broker'
-		#self.cookie = ["Cookie: sessionid=uskxhvmfga8s3xfma3mcitb29499kg2p; _pk_id.2.7f89=f02a0d400f4ec018.1499432889.8.1501599292.1501599281.; _pk_ses.2.7f89=*; csrftoken=Y8aKx0xjTmeEbJwNsngdGQXivmUnTgJ8"]
+	"""
+	Class that defines a WebSocket client
+	"""
+	def __init__(self):
+		pass
 
-	def connect_no_auth(self):
+	def connect_no_auth(self, host):
+		"""
+		Connects to host without passing a cookie for authentication
+		"""
 		self.ws = websocket.WebSocket()
+		self.ws.connect(host)
 		
 		events.quitting += self.on_close
 
 	def connect(self, cookie, host):
+		"""
+		Connects to host and authenticates via a cookie.
+		Cookie should be a string of following format: "Cookie: COOKIE-STRING-HERE"
+		"""
+		
 		self.ws = websocket.WebSocket()
-		self.ws.connect(host, header = cookie)
+		self.ws.connect(host, header = [cookie])
 		
 		events.quitting += self.on_close
 
 
-	def receive(self):
-		response = self.ws.recv()
-		return response
-
-
-	def send_no_error_check(self, payload):
+	def send_and_recv(self, payload):
+		"""
+		Sends payload to host and waits for response.
+		Times out after 10 seconds of no response.
+		"""
 		json_data = json.dumps(payload, ensure_ascii = False).encode('utf8')
 
 		g = gevent.spawn(self.ws.send, json_data)
@@ -41,6 +51,10 @@ class SocketClient(object):
 
 
 	def send(self, payload, name):
+		"""
+		Sends payload and handles the error checking and the locust events.
+		name is displayed in the Web GUI.
+		"""
 		start_time = time.time()
 		e = None
 		try:
@@ -64,4 +78,7 @@ class SocketClient(object):
 	
 
 	def on_close(self):
+		"""
+		This is run when the locust service is terminated.
+		"""
 		self.ws.close()

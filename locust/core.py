@@ -132,7 +132,7 @@ class HttpLocust(Locust):
             raise LocustError("You must specify the base host. Either in the host attribute in the Locust class, or on the command line using the --host option.")
         
         self.client = HttpSession(base_url=self.host)
-        self.ws_client = SocketClient(self.host)
+        self.ws_client = SocketClient()
 
 class TaskSetMeta(type):
     """

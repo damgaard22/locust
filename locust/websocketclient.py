@@ -20,18 +20,19 @@ class SocketClient(object):
 		"""
 		self.ws = websocket.WebSocket()
 		self.ws.connect(host)
-		
+
 		events.quitting += self.on_close
+
 
 	def connect(self, cookie, host):
 		"""
 		Connects to host and authenticates via a cookie.
 		Cookie should be a string of following format: "Cookie: COOKIE-STRING-HERE"
 		"""
-		
+
 		self.ws = websocket.WebSocket()
 		self.ws.connect(host, header = [cookie])
-		
+
 		events.quitting += self.on_close
 
 
@@ -58,24 +59,25 @@ class SocketClient(object):
 		start_time = time.time()
 		e = None
 		try:
-			data = self.send_no_error_check(payload)
+			data = self.send_and_recv(payload)
 			print(data)
-			assert 'id' in data 
+			#assert 'id' in data
 		except AssertionError as exp:
 			e = exp
 			print('Error: ', exp)
 		except Exception as exp:
 			e = exp
-			self.ws.close()
-			self.connect()
+			pass
+			# self.ws.close()
+			# self.connect()
 		elapsed = int((time.time() - start_time) * 1000)
 		if e:
-			events.request_failure.fire(request_type='WebSocket', name=name, 
+			events.request_failure.fire(request_type='WebSocket', name=name,
 										response_time=elapsed, exception=e)
 		else:
 			events.request_success.fire(request_type='WebSocket', name=name,
 										response_time=elapsed, response_length=0)
-	
+
 
 	def on_close(self):
 		"""
